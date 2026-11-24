@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>UltimateUmpiring — Australian Cricket Match & Rules Command</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            pitch: {
+              950: '#07110d',
+              900: '#0d1f18',
+              800: '#143327',
+              700: '#1b4736',
+              600: '#059669',
+              500: '#10b981',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      overscroll-behavior-y: none;
+    }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .tap-btn:active { transform: scale(0.96); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- TOAST / NON-BLOCKING MESSAGE BANNER -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md pointer-events-none flex flex-col gap-2"></div>
+
+  <!-- MODAL OVERLAY -->
+  <div id="modal-overlay" class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div id="modal-content" class="bg-white rounded-2xl shadow-2xl border-2 border-slate-300 w-full max-w-lg max-h-[88vh] overflow-y-auto p-5">
+      <!-- Dynamic Modal Body -->
+    </div>
+  </div>
+
+  <!-- ==================== 1. EMAIL AUTHENTICATION SCREEN ==================== -->
+  <div id="auth-screen" class="min-h-screen flex flex-col justify-center items-center p-4 bg-slate-900 text-white">
+    <div class="w-full max-w-md bg-white text-slate-900 rounded-3xl shadow-2xl border-2 border-slate-200 overflow-hidden">
+      <div class="bg-pitch-900 text-white p-6 border-b-4 border-emerald-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold tracking-wider uppercase">Live Production • Australia</span>
+          <button onclick="openEmailApiSettingsModal()" class="text-xs font-mono text-amber-300 underline hover:text-white">
+            Resend API Setup
+          </button>
+        </div>
+        <h1 class="text-2xl font-black tracking-tight flex items-center gap-2">
+          <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m-4-15v15m8-15v15M5 6h14"/></svg>
+          UltimateUmpiring
+        </h1>
+        <p class="text-slate-300 text-sm mt-1">Email-Verified Umpire Account • OfficialsHQ, PlayCricket & Association Rules.</p>
+      </div>
+
+      <!-- Auth Mode Switcher -->
+      <div class="grid grid-cols-2 bg-slate-100 border-b border-slate-200 p-1">
+        <button id="auth-tab-signin" onclick="switchAuthMode('signin')" class="py-2 rounded-xl bg-slate-900 text-white font-extrabold text-xs tap-btn">
+          Sign In
+        </button>
+        <button id="auth-tab-register" onclick="switchAuthMode('register')" class="py-2 rounded-xl text-slate-700 font-extrabold text-xs tap-btn">
+          Create Account
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <!-- SIGN IN PANEL -->
+        <div id="auth-panel-signin" class="space-y-4">
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">Umpire Email Address</label>
+            <input id="signin-email" type="email" placeholder="you@example.com.au" class="w-full px-3.5 py-3 rounded-xl border-2 border-slate-300 bg-slate-50 font-semibold text-sm focus:border-emerald-600 focus:outline-none" />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700">Password</label>
+              <button onclick="switchAuthMode('forgot')" class="text-xs font-bold text-emerald-700 hover:underline">
+                Forgot password?
+              </button>
+            </div>
+            <input id="signin-password" type="password" placeholder="••••••••" class="w-full px-3.5 py-3 rounded-xl border-2 border-slate-300 bg-slate-50 font-semibold text-sm focus:border-emerald-600 focus:outline-none" />
+          </div>
+
+          <button onclick="handleSignIn()" class="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base shadow-lg tap-btn transition">
+            Sign In to Command Center
+          </button>
+        </div>
+
+        <!-- REGISTER PANEL -->
+        <div id="auth-panel-register" class="hidden space-y-3.5">
+          <div id="register-step-form" class="space-y-3">
+            <div>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">Exact Display Name in OfficialsHQ</label>
+              <input id="reg-name" type="text" placeholder="e.g. Vishesh Bhavsar" class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">Email Address (For Verification & Reports)</label>
+              <input id="reg-email" type="email" placeholder="you@example.com.au" class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 font-semibold text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">Create Password (Min 6 chars)</label>
+              <input id="reg-password" type="password" placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 font-semibold text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">Home Cricket Association</label>
+              <select id="reg-assoc" class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm focus:border-emerald-600 focus:outline-none">
+                <option value="mca_od">Mercantile Cricket Association (mercantileca.com.au)</option>
+                <option value="mca_t20">Mercantile Cricket Association — Sunday T20</option>
+                <option value="mca_2day">Mercantile Cricket Association — Two-Day</option>
+                <option value="vic_junior_u13">Cricket Victoria Junior Pathway (U13 / U15)</option>
+              </select>
+            </div>
+
+            <button onclick="sendEmailVerificationCode()" class="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm shadow-lg tap-btn transition">
+              Send Verification Email via Resend →
+            </button>
+          </div>
+
+          <!-- Email OTP Verification Step -->
+          <div id="register-step-verify" class="hidden space-y-3">
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs">
+              <p class="font-bold">Verification code dispatched to <span id="verify-email-display" class="font-mono"></span></p>
+              <p id="verify-fallback-hint" class="text-emerald-800 mt-1"></p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">Enter 6-Digit Email Code</label>
+              <input id="reg-otp-input" type="text" maxlength="6" placeholder="000000" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 font-mono font-black text-xl tracking-[0.4em] text-center focus:border-emerald-600 focus:outline-none" />
+            </div>
+
+            <button onclick="verifyAndCreateAccount()" class="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-lg tap-btn transition">
+              Verify Email & Send Welcome Email
+            </button>
+            <button onclick="backToRegisterForm()" class="w-full py-1 text-xs font-bold text-slate-500 hover:text-slate-800">
+              ← Edit Email / Details
+            </button>
+          </div>
+        </div>
+
+        <!-- FORGOT PASSWORD PANEL -->
+        <div id="auth-panel-forgot" class="hidden space-y-4">
+          <div class="p-3 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-950">
+            Enter your registered email address. We will send a 6-digit password reset code via Resend so you can set a new password.
+          </div>
+
+          <div id="forgot-step-1" class="space-y-3">
+            <div>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">Registered Email Address</label>
+              <input id="forgot-email" type="email" placeholder="you@example.com.au" class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 font-semibold text-sm" />
+            </div>
+            <button onclick="sendPasswordResetCode()" class="w-full py-3 rounded-xl bg-slate-900 text-white font-extrabold text-sm tap-btn">
+              Send Password Reset Code
+            </button>
+          </div>
+
+          <div id="forgot-step-2" class="hidden space-y-3">
+            <p id="forgot-hint" class="text-xs font-bold text-emerald-800 bg-emerald-50 p-2.5 rounded-xl border border-emerald-300"></p>
+            <div>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">6-Digit Reset Code</label>
+              <input id="forgot-code" type="text" maxlength="6" placeholder="000000" class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 font-mono font-bold text-center text-lg" />
+            </div>
+            <div>
+              <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1">New Password</label>
+              <input id="forgot-new-pass" type="password" placeholder="New password (min 6 chars)" class="w-full px-3.5 py-2.5 rounded-xl border-2 border-slate-300 text-sm" />
+            </div>
+            <button onclick="completePasswordReset()" class="w-full py-3 rounded-xl bg-emerald-600 text-white font-extrabold text-sm tap-btn">
+              Update Password & Sign In
+            </button>
+          </div>
+
+          <button onclick="switchAuthMode('signin')" class="w-full py-1 text-xs font-bold text-slate-500 hover:text-slate-800">
+            ← Back to Sign In
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 2. MAIN APPLICATION SHELL ==================== -->
+  <div id="app-shell" class="hidden flex-col min-h-screen pb-24">
+
+    <!-- TOP COMPACT HEADER -->
+    <header class="bg-pitch-950 text-white px-4 py-2.5 flex items-center justify-between border-b border-slate-800 sticky top-0 z-30">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center font-black text-white text-sm shadow">UU</div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span id="header-umpire-name" class="font-extrabold text-sm tracking-tight">Umpire</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Connected"></span>
+          </div>
+          <p id="header-assoc-badge" class="text-[11px] text-emerald-300 font-semibold leading-none">Mercantile Cricket Assoc. (MCA)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button onclick="openEmailApiSettingsModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold text-emerald-300 tap-btn">
+          Email / API
+        </button>
+        <button onclick="openLawsModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold text-amber-300 tap-btn">
+          MCC Laws
+        </button>
+        <button onclick="logoutUser()" title="Sign Out" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 tap-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- PERSISTENT LIVE MATCH OVER-RATE & TIME STATUS BANNER -->
+    <div id="live-status-banner" class="bg-white border-b-2 border-slate-300 shadow-sm px-3 py-2.5 sticky top-[52px] z-20">
+      <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-baseline gap-2">
+            <span id="banner-team-abbr" class="px-2 py-0.5 rounded bg-slate-900 text-white font-black text-xs">BATTING XI</span>
+            <span id="banner-score" class="font-mono font-black text-xl sm:text-2xl text-slate-900 tabular-nums">0/0</span>
+            <span id="banner-overs" class="font-mono font-bold text-sm sm:text-base text-slate-600 tabular-nums">(0.0 / 40 ov)</span>
+          </div>
+
+          <div class="text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Time</span>
+              <span id="banner-clock" class="font-mono font-extrabold text-sm text-slate-900 tabular-nums">12:00</span>
+              <span class="text-slate-300">|</span>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Close</span>
+              <span id="banner-close-time" class="font-mono font-extrabold text-sm text-emerald-700 tabular-nums">14:40</span>
+            </div>
+            <div class="text-[11px] font-semibold text-slate-600">
+              Req by now: <span id="banner-req-overs" class="font-mono font-bold text-slate-900">0.0 ov</span> • Net Lost: <span id="banner-net-lost" class="font-mono font-bold text-amber-700">0m</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="banner-pacing-bar" class="mt-2 px-3 py-1.5 rounded-xl bg-emerald-100 border border-emerald-400 flex items-center justify-between text-xs font-extrabold text-emerald-950">
+          <span id="banner-pacing-text" class="flex items-center gap-1.5">
+            ⏱️ ON SCHEDULE (0 MINS)
+          </span>
+          <span id="banner-rule-tag" class="font-mono text-[11px] bg-white/80 px-2 py-0.5 rounded border border-emerald-300">
+            MCA 40-Ov (4.0m/ov)
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-3 sm:p-4 space-y-4">
+
+      <!-- ==================== TAB 1: OFFICIALSHQ & BRIEFING ==================== -->
+      <section id="tab-fixtures" class="tab-panel space-y-4">
+        <div class="bg-white rounded-2xl border-2 border-slate-300 p-4 shadow-xs space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Separate Account Connectors</span>
+              <h2 class="text-lg font-black text-slate-900">OfficialsHQ & PlayCricket Sync Hub</h2>
+            </div>
+            <span class="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-300 text-[11px] font-mono font-bold text-slate-700">
+              No OHQ Password Needed
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button onclick="switchConnectorTab('email')" id="conn-btn-email" class="py-2 px-2 rounded-lg bg-slate-900 text-white font-extrabold text-xs tap-btn">
+              1. Email Sync
+            </button>
+            <button onclick="switchConnectorTab('ical')" id="conn-btn-ical" class="py-2 px-2 rounded-lg text-slate-700 hover:bg-white font-extrabold text-xs tap-btn">
+              2. iCal (.ics)
+            </button>
+            <button onclick="switchConnectorTab('playcricket')" id="conn-btn-playcricket" class="py-2 px-2 rounded-lg text-slate-700 hover:bg-white font-extrabold text-xs tap-btn">
+              3. PlayCricket ID
+            </button>
+          </div>
+
+          <!-- Connector 1: Auto-Forward Appointment Email Sync -->
+          <div id="conn-panel-email" class="space-y-3 pt-1">
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-300 space-y-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-extrabold uppercase text-emerald-950">Your Personal Inbound Sync Address</span>
+                <button onclick="copySyncEmail()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold tap-btn">
+                  Copy Address
+                </button>
+              </div>
+              <input id="personal-sync-email" type="text" readonly value="" class="w-full px-3 py-2 rounded-lg bg-white border border-emerald-300 font-mono font-bold text-xs text-slate-900" />
+              <p class="text-[11px] text-emerald-900">
+                Auto-forward appointment emails from <code class="bg-white px-1 rounded">officialshq.com.au</code> or paste any real appointment email below to import it immediately.
+              </p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-300 space-y-2">
+              <label class="text-[11px] font-extrabold uppercase text-slate-700 block">Paste OfficialsHQ Appointment Email</label>
+              <textarea id="ohq-email-paste" rows="3" placeholder="Paste your OfficialsHQ appointment notification email here to extract fixture, venue, co-umpire & weather..." class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono bg-white"></textarea>
+              <button onclick="parseOfficialsHqEmail()" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs tap-btn">
+                Parse Appointment Email & Add to Fixtures
+              </button>
+            </div>
+          </div>
+
+          <!-- Connector 2: iCal -->
+          <div id="conn-panel-ical" class="hidden space-y-2.5 pt-1">
+            <p class="text-xs text-slate-600">
+              Copy your personal calendar subscription link from <strong>OfficialsHQ → Appointments → Export / Sync Calendar (.ics)</strong>.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input id="ohq-ical-url" type="url" placeholder="https://app.officialshq.com/ical/umpire/your-token.ics" class="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-300 font-mono text-xs bg-slate-50" />
+              <button onclick="saveIcalFeed()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs tap-btn">
+                Save Feed
+              </button>
+            </div>
+            <p id="ical-status-text" class="text-[11px] font-semibold text-slate-500">Status: Ready to link personal OfficialsHQ .ics feed.</p>
+          </div>
+
+          <!-- Connector 3: PlayCricket Match URL / ID Importer -->
+          <div id="conn-panel-playcricket" class="hidden space-y-2.5 pt-1">
+            <p class="text-xs text-slate-600">
+              Enter a <strong>play.cricket.com.au</strong> match URL or Match ID along with the two competing teams to initialize the match card.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input id="pc-home-input" type="text" placeholder="Home Team (e.g. Melbourne Colts CC)" class="px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold bg-slate-50" />
+              <input id="pc-away-input" type="text" placeholder="Away Team (e.g. Richmond City CC)" class="px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold bg-slate-50" />
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input id="pc-match-input" type="text" placeholder="https://play.cricket.com.au/match/..." class="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-300 font-mono text-xs bg-slate-50" />
+              <button onclick="importFromPlayCricketUrl()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs tap-btn">
+                Create Match Card
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming Allocated Fixtures Card -->
+        <div class="bg-white rounded-2xl border-2 border-slate-200 p-4 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Your Allocations</span>
+              <h2 class="text-lg font-black text-slate-900">Upcoming Umpire Fixtures</h2>
+            </div>
+            <button onclick="openAddManualFixtureModal()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold tap-btn">
+              + Add Fixture
+            </button>
+          </div>
+
+          <div id="fixtures-list" class="mt-3 space-y-3">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Pre-Match Briefing Card -->
+        <div id="prematch-briefing-card" class="hidden bg-white rounded-2xl border-2 border-emerald-600 p-4 shadow-sm space-y-4">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-extrabold text-[11px] uppercase">Accepted Fixture Briefing</span>
+              <h3 id="briefing-match-title" class="text-lg font-black text-slate-900 mt-1"></h3>
+              <p id="briefing-match-sub" class="text-xs font-semibold text-slate-600"></p>
+            </div>
+            <button onclick="loadFixtureIntoLiveMatch()" class="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow tap-btn shrink-0">
+              Load Match →
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Ground Weather Check -->
+            <div class="p-3.5 rounded-xl bg-sky-50 border border-sky-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold uppercase text-sky-900">☀️ BOM Ground Forecast</span>
+                <a href="http://www.bom.gov.au/vic/forecasts/melbourne.shtml" target="_blank" rel="noopener" class="text-[11px] font-bold text-sky-700 underline">Open BOM ↗</a>
+              </div>
+              <p class="text-xs text-slate-700">Check live radar & heat policy thresholds for your ground suburb before toss.</p>
+            </div>
+
+            <!-- Association Website Updates -->
+            <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-extrabold uppercase text-amber-950">📢 Association Website Feed</span>
+                <button onclick="addCustomAssociationNotice()" class="px-2 py-0.5 rounded bg-amber-200 hover:bg-amber-300 text-amber-950 text-[11px] font-extrabold tap-btn">
+                  + Notice
+                </button>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <input id="assoc-feed-url" type="url" value="https://www.mercantileca.com.au/" onchange="updateAssocFeedUrl(this.value)" class="flex-1 px-2 py-1 rounded bg-white border border-amber-300 font-mono text-[11px] font-bold text-slate-800" />
+                <a id="assoc-feed-link" href="https://www.mercantileca.com.au/" target="_blank" rel="noopener" class="px-2.5 py-1 rounded bg-amber-900 text-white text-[10px] font-bold">Open ↗</a>
+              </div>
+              <ul id="assoc-notices-list" class="text-xs text-slate-800 space-y-1.5 font-medium"></ul>
+            </div>
+          </div>
+
+          <!-- Squad Roster Editor -->
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold uppercase text-slate-800">Playing XIs (Batting & Bowling Squads)</span>
+              <button onclick="openEditSquadsModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold tap-btn">
+                Edit Player Names
+              </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <p id="briefing-home-label" class="font-extrabold text-slate-900 mb-1">Batting Team</p>
+                <p id="briefing-home-xi" class="text-slate-600 leading-relaxed"></p>
+              </div>
+              <div>
+                <p id="briefing-away-label" class="font-extrabold text-slate-900 mb-1">Bowling Team</p>
+                <p id="briefing-away-xi" class="text-slate-600 leading-relaxed"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 2: LIVE MATCH COMMAND ==================== -->
+      <section id="tab-live" class="tab-panel hidden space-y-4">
+        <div class="bg-white rounded-2xl border-2 border-slate-200 p-3.5 shadow-xs space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-extrabold text-xs">1st Innings</span>
+              <span id="live-powerplay-badge" class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-900 border border-indigo-300 font-extrabold text-xs">
+                PP: 1-8 (P1)
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-300">
+              <button id="live-tick-btn" onclick="toggleLiveRealTimeTick()" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-extrabold text-xs tap-btn">
+                ▶ Live Clock: OFF
+              </button>
+              <button onclick="advanceSimClock(1)" class="px-2 py-1 rounded-lg bg-white border border-slate-300 font-mono font-bold text-xs tap-btn">+1m</button>
+              <button onclick="advanceSimClock(4)" class="px-2 py-1 rounded-lg bg-white border border-slate-300 font-mono font-bold text-xs tap-btn">+4m</button>
+              <button onclick="setMatchStartTimeNow()" class="px-2 py-1 rounded-lg bg-slate-800 text-white font-bold text-xs tap-btn">Start Now</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+              <div class="min-w-0 flex-1">
+                <span class="text-[10px] font-extrabold uppercase text-emerald-700">Active End Bowler</span>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <select id="active-bowler-select" onchange="changeActiveBowler(this.value)" class="font-extrabold text-sm text-slate-900 bg-transparent focus:outline-none truncate"></select>
+                </div>
+                <p id="active-bowler-spell-info" class="text-[11px] font-mono font-bold text-slate-700 mt-0.5">0.0-0-0-0</p>
+                <div class="flex items-center gap-1.5 mt-1 pt-1 border-t border-slate-200">
+                  <span class="text-[10px] font-bold text-slate-500">Other End:</span>
+                  <select id="other-end-bowler-select" onchange="changeOtherEndBowler(this.value)" class="text-[11px] font-extrabold text-slate-800 bg-transparent focus:outline-none truncate"></select>
+                </div>
+              </div>
+              <button onclick="switchTab('bowlers')" class="px-2.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold tap-btn shrink-0">Spells</button>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-extrabold uppercase text-slate-500">This Over Ball-by-Ball</span>
+                <div id="current-over-balls" class="flex items-center gap-1.5 mt-1 min-h-[28px] flex-wrap"></div>
+              </div>
+              <button onclick="undoLastBall()" class="px-2.5 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-900 border border-rose-300 text-xs font-extrabold tap-btn">
+                ↶ Undo
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- HIGH-CONTRAST UMPIRE BALL COUNTER PAD -->
+        <div class="bg-white rounded-2xl border-2 border-slate-300 p-4 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-600">Ball & Scoring Counter</h3>
+            <div class="flex items-center gap-2">
+              <button onclick="triggerDrinksTimer()" class="px-2.5 py-1 rounded-lg bg-sky-100 text-sky-900 border border-sky-300 text-xs font-extrabold tap-btn">⏱ Drinks (4m)</button>
+              <button onclick="forceEndOver()" class="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-900 text-xs font-extrabold tap-btn">End Over</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-6 gap-2">
+            <button onclick="recordBall('0', 0, true)" class="h-14 rounded-xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 font-mono font-black text-xl text-slate-900 tap-btn">•</button>
+            <button onclick="recordBall('1', 1, true)" class="h-14 rounded-xl bg-white hover:bg-emerald-50 border-2 border-slate-300 font-mono font-black text-xl text-slate-900 tap-btn">1</button>
+            <button onclick="recordBall('2', 2, true)" class="h-14 rounded-xl bg-white hover:bg-emerald-50 border-2 border-slate-300 font-mono font-black text-xl text-slate-900 tap-btn">2</button>
+            <button onclick="recordBall('3', 3, true)" class="h-14 rounded-xl bg-white hover:bg-emerald-50 border-2 border-slate-300 font-mono font-black text-xl text-slate-900 tap-btn">3</button>
+            <button onclick="recordBall('4', 4, true)" class="h-14 rounded-xl bg-emerald-600 hover:bg-emerald-700 border-2 border-emerald-800 font-mono font-black text-xl text-white shadow-xs tap-btn">4</button>
+            <button onclick="recordBall('6', 6, true)" class="h-14 rounded-xl bg-indigo-600 hover:bg-indigo-700 border-2 border-indigo-800 font-mono font-black text-xl text-white shadow-xs tap-btn">6</button>
+          </div>
+
+          <div class="grid grid-cols-5 gap-2">
+            <button onclick="recordBall('Wd', 1, false)" class="h-12 rounded-xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 font-extrabold text-sm text-amber-950 tap-btn">WIDE</button>
+            <button onclick="recordBall('Nb', 1, false)" class="h-12 rounded-xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-400 font-extrabold text-sm text-amber-950 tap-btn">NO BALL</button>
+            <button onclick="recordBall('B', 1, true)" class="h-12 rounded-xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 font-extrabold text-sm text-slate-800 tap-btn">BYE</button>
+            <button onclick="recordBall('Lb', 1, true)" class="h-12 rounded-xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 font-extrabold text-sm text-slate-800 tap-btn">LEG BYE</button>
+            <button onclick="openWicketModal()" class="h-12 rounded-xl bg-rose-600 hover:bg-rose-700 border-2 border-rose-800 font-black text-sm text-white shadow-xs tap-btn">WICKET</button>
+          </div>
+        </div>
+
+        <!-- LOST & ADDED MINUTES LEDGER -->
+        <div class="bg-white rounded-2xl border-2 border-slate-300 p-4 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-700">Time & Over Deduction Engine</span>
+              <h3 class="text-base font-black text-slate-900">Lost & Added Minutes Log</h3>
+            </div>
+            <div class="text-right font-mono text-xs">
+              <div class="font-bold text-slate-700">Grace: <span id="ledger-grace-display">8m</span></div>
+              <div class="font-extrabold text-rose-700">Overs Deducted: <span id="ledger-overs-deducted">0 ov</span></div>
+            </div>
+          </div>
+
+          <div id="stopwatch-panel" class="p-3 rounded-xl bg-slate-900 text-white flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Live Stoppage Timer</span>
+              <div id="stopwatch-display" class="font-mono font-black text-2xl tabular-nums">00:00</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="stopwatch-toggle-btn" onclick="toggleStoppageTimer()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs tap-btn">
+                ▶ Start Stoppage
+              </button>
+              <button onclick="captureStopwatchMinutes()" class="px-3 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs tap-btn">
+                Use Mins ↓
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+            <select id="time-event-type" class="sm:col-span-4 px-3 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-xs">
+              <option value="Lost: Wet Weather">🌧️ Lost: Wet Weather</option>
+              <option value="Lost: Player Injury">🩹 Lost: Player Injury</option>
+              <option value="Lost: Lost Ball">🏏 Lost: Lost Ball</option>
+              <option value="Lost: Unscheduled Drinks">🥤 Lost: Unscheduled Drinks</option>
+              <option value="Lost: Ground / Sightscreen Delay">🚧 Lost: Ground / Sightscreen Delay</option>
+              <option value="Added: Extra Time / Grace">➕ Added: Extra Time / Allowance</option>
+            </select>
+
+            <input id="time-event-mins" type="number" min="1" max="180" value="5" placeholder="Mins" class="sm:col-span-2 px-3 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 font-mono font-extrabold text-sm text-center" />
+
+            <input id="time-event-comment" type="text" placeholder="Mandatory umpire note..." class="sm:col-span-4 px-3 py-2.5 rounded-xl border-2 border-slate-300 bg-slate-50 text-xs font-medium" />
+
+            <button onclick="addTimeLogEntry()" class="sm:col-span-2 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs tap-btn">
+              + Log Time
+            </button>
+          </div>
+
+          <div id="time-log-list" class="space-y-2 max-h-52 overflow-y-auto pt-1"></div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 3: BOWLER & SPELL TRACKER ==================== -->
+      <section id="tab-bowlers" class="tab-panel hidden space-y-4">
+        <div class="bg-white rounded-2xl border-2 border-slate-200 p-4 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Workload & Age-Group Compliance</span>
+              <h2 class="text-lg font-black text-slate-900">Bowler Spells & Quota Monitor</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="bowling-grade-profile" onchange="changeBowlingRestrictionProfile(this.value)" class="px-2.5 py-1.5 rounded-xl border-2 border-slate-300 bg-slate-50 text-xs font-extrabold">
+                <option value="open">Open Senior (Max 8 ov, Unlim. Spell)</option>
+                <option value="u15">U15 Junior (Max 5 ov, Spell 3, Rest 3)</option>
+                <option value="u13">U13 / 12yo (Max 4 ov, Spell 2, Rest 4)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="bowler-alerts-box" class="mt-3 hidden p-3 rounded-xl bg-rose-100 border-2 border-rose-400 text-rose-950 text-xs font-extrabold"></div>
+          <div id="bowlers-list" class="mt-3 space-y-2.5"></div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 4: ASSOCIATION & RULES ENGINE ==================== -->
+      <section id="tab-rules" class="tab-panel hidden space-y-4">
+        <div class="bg-white rounded-2xl border-2 border-slate-200 p-4 shadow-xs space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Dynamic Match Governance</span>
+              <h2 class="text-lg font-black text-slate-900">Association Rules Engine</h2>
+            </div>
+            <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-amber-300 font-mono text-xs font-bold">Base: MCC Laws (Lords)</span>
+          </div>
+
+          <div id="association-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1"></div>
+        </div>
+
+        <div class="bg-white rounded-2xl border-2 border-emerald-600 p-4 shadow-sm space-y-4">
+          <div>
+            <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-extrabold text-[11px] uppercase">Multi-Association Onboarding</span>
+            <h3 class="text-base font-black text-slate-900 mt-1">Create Association & Upload Rulebook</h3>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Association Name & State</label>
+              <input id="new-assoc-name" type="text" placeholder="e.g. Eastern Cricket Association (ECA - VIC)" class="w-full px-3 py-2.5 rounded-xl border-2 border-slate-300 text-xs font-bold" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Official Website URL</label>
+              <input id="new-assoc-url" type="url" placeholder="https://www.easterncricket.com.au/" class="w-full px-3 py-2.5 rounded-xl border-2 border-slate-300 text-xs font-bold" />
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-300 space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-extrabold uppercase text-slate-700">Upload Rulebook File or Paste By-Law Text</label>
+              <label class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-bold cursor-pointer tap-btn">
+                📄 Choose File
+                <input type="file" accept=".txt,.json,.md,.csv,.pdf" onchange="handleRuleFileUpload(event)" class="hidden" />
+              </label>
+            </div>
+            <textarea id="new-assoc-raw-rules" rows="2" placeholder="Paste playing conditions text here and click Auto-Extract..." class="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono"></textarea>
+            <button onclick="parseRawRuleText()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold tap-btn">
+              ✨ Auto-Extract Parameters from Text
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[10px] font-extrabold uppercase text-slate-600 mb-1">Overs / Innings</label>
+              <input id="rule-overs" type="number" value="40" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 font-mono font-extrabold text-sm" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-extrabold uppercase text-slate-600 mb-1">Mins Per Over</label>
+              <input id="rule-mins-per-over" type="number" step="0.1" value="4.0" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 font-mono font-extrabold text-sm" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-extrabold uppercase text-slate-600 mb-1">Grace Mins (Total)</label>
+              <input id="rule-grace" type="number" value="8" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 font-mono font-extrabold text-sm" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-extrabold uppercase text-slate-600 mb-1">Max Ov / Bowler</label>
+              <input id="rule-max-bowler" type="number" value="8" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 font-mono font-extrabold text-sm" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-extrabold uppercase text-slate-600 mb-1">Max Spell (Ov)</label>
+              <input id="rule-max-spell" type="number" value="8" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 font-mono font-extrabold text-sm" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-extrabold uppercase text-slate-600 mb-1">Min Rest (Ov)</label>
+              <input id="rule-min-rest" type="number" value="0" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 font-mono font-extrabold text-sm" />
+            </div>
+          </div>
+
+          <button onclick="saveNewAssociation()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow tap-btn">
+            Save & Activate Association Ruleset
+          </button>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 5: PLAYCRICKET SCORECARD & RESEND REPORT ==================== -->
+      <section id="tab-scorecard" class="tab-panel hidden space-y-4">
+        <div class="bg-white rounded-2xl border-2 border-slate-200 p-4 shadow-xs space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-200">
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">Live Match Sheet & Resend Dispatch</span>
+              <h2 class="text-lg font-black text-slate-900">Scorecard & Umpire Report</h2>
+            </div>
+            <button onclick="openExportReportModal()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow tap-btn">
+              📧 Email / Export Report
+            </button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-[10px] font-extrabold uppercase text-slate-500">Current Run Rate</span>
+              <div id="sc-crr" class="font-mono font-black text-lg text-slate-900">0.00</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-[10px] font-extrabold uppercase text-slate-500">Projected (at CRR)</span>
+              <div id="sc-proj" class="font-mono font-black text-lg text-emerald-700">0</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <span class="text-[10px] font-extrabold uppercase text-slate-500">Extras</span>
+              <div id="sc-extras" class="font-mono font-black text-lg text-slate-900">0</div>
+            </div>
+          </div>
+
+          <div>
+            <h3 id="sc-batting-title" class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2">Batting Scorecard</h3>
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900 text-white font-bold uppercase text-[10px]">
+                  <tr>
+                    <th class="py-2.5 px-3">Batter</th>
+                    <th class="py-2.5 px-2">Status</th>
+                    <th class="py-2.5 px-2 text-right">R</th>
+                    <th class="py-2.5 px-2 text-right">B</th>
+                    <th class="py-2.5 px-2 text-right">4s</th>
+                    <th class="py-2.5 px-3 text-right">6s</th>
+                  </tr>
+                </thead>
+                <tbody id="scorecard-batting-body" class="divide-y divide-slate-200 font-medium"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h3 id="sc-bowling-title" class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2">Bowling Scorecard</h3>
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900 text-white font-bold uppercase text-[10px]">
+                  <tr>
+                    <th class="py-2.5 px-3">Bowler</th>
+                    <th class="py-2.5 px-2 text-right">O</th>
+                    <th class="py-2.5 px-2 text-right">M</th>
+                    <th class="py-2.5 px-2 text-right">R</th>
+                    <th class="py-2.5 px-2 text-right">W</th>
+                    <th class="py-2.5 px-3 text-right">Econ</th>
+                  </tr>
+                </thead>
+                <tbody id="scorecard-bowling-body" class="divide-y divide-slate-200 font-medium"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- BOTTOM MOBILE NAVIGATION BAR -->
+    <nav class="fixed bottom-0 inset-x-0 bg-slate-950 text-slate-400 border-t-2 border-slate-800 z-30">
+      <div class="max-w-4xl mx-auto grid grid-cols-5">
+        <button onclick="switchTab('fixtures')" data-tab="fixtures" class="nav-btn py-2.5 px-1 flex flex-col items-center justify-center gap-1 text-emerald-400 font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span class="text-[10px] tracking-tight">OfficialsHQ</span>
+        </button>
+
+        <button onclick="switchTab('live')" data-tab="live" class="nav-btn py-2.5 px-1 flex flex-col items-center justify-center gap-1 hover:text-white font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="text-[10px] tracking-tight">Live Match</span>
+        </button>
+
+        <button onclick="switchTab('bowlers')" data-tab="bowlers" class="nav-btn py-2.5 px-1 flex flex-col items-center justify-center gap-1 hover:text-white font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span class="text-[10px] tracking-tight">Bowlers</span>
+        </button>
+
+        <button onclick="switchTab('rules')" data-tab="rules" class="nav-btn py-2.5 px-1 flex flex-col items-center justify-center gap-1 hover:text-white font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="text-[10px] tracking-tight">Rules</span>
+        </button>
+
+        <button onclick="switchTab('scorecard')" data-tab="scorecard" class="nav-btn py-2.5 px-1 flex flex-col items-center justify-center gap-1 hover:text-white font-bold">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="text-[10px] tracking-tight">Scorecard</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ==================== APPLICATION LOGIC ==================== -->
+  <script>
+    const STORAGE_KEY = 'ultimate_umpiring_prod_v1';
+    const ACCOUNTS_KEY = 'ultimate_umpiring_accounts_v1';
+
+    const DEFAULT_ASSOCIATIONS = [
+      {
+        id: 'mca_od',
+        name: 'Mercantile Cricket Association (MCA) — One-Day 40',
+        shortName: 'MCA 40-Ov',
+        website: 'https://www.mercantileca.com.au/',
+        oversPerInnings: 40,
+        minsPerOver: 4.0,
+        graceMins: 8,
+        deductionRateMinsPerOver: 4.0,
+        maxOversPerBowler: 8,
+        maxConsecutiveSpell: 8,
+        minRestOvers: 0,
+        powerplayOvers: '1-8 (P1), 9-32 (P2), 33-40 (P3)',
+        notes: 'MCA By-Law 12: 160 mins scheduled per innings. 8 mins grace before over reduction at 1 over per 4 mins.'
+      },
+      {
+        id: 'mca_t20',
+        name: 'Mercantile Cricket Association (MCA) — Sunday T20',
+        shortName: 'MCA T20',
+        website: 'https://www.mercantileca.com.au/',
+        oversPerInnings: 20,
+        minsPerOver: 4.0,
+        graceMins: 4,
+        deductionRateMinsPerOver: 4.0,
+        maxOversPerBowler: 4,
+        maxConsecutiveSpell: 4,
+        minRestOvers: 0,
+        powerplayOvers: '1-6 (Max 2 Outside)',
+        notes: 'MCA T20 Cup: 80 mins per innings. 6-run penalty per unbowled over at cut-off.'
+      },
+      {
+        id: 'mca_2day',
+        name: 'Mercantile Cricket Association (MCA) — Two-Day 80-Ov',
+        shortName: 'MCA 2-Day',
+        website: 'https://www.mercantileca.com.au/',
+        oversPerInnings: 80,
+        minsPerOver: 3.75,
+        graceMins: 12,
+        deductionRateMinsPerOver: 3.75,
+        maxOversPerBowler: 20,
+        maxConsecutiveSpell: 10,
+        minRestOvers: 0,
+        powerplayOvers: 'Standard Field Restrictions (Max 5 On-Side)',
+        notes: 'MCA A/B Grade Two-Day: 300 mins per day (80 overs @ 16 ov/hr).'
+      },
+      {
+        id: 'vic_junior_u13',
+        name: 'Cricket Victoria Junior Pathway — U13 / 12yo Fast Bowling',
+        shortName: 'CV U13 Junior',
+        website: 'https://www.cricketvictoria.com.au/',
+        oversPerInnings: 30,
+        minsPerOver: 3.5,
+        graceMins: 6,
+        deductionRateMinsPerOver: 3.5,
+        maxOversPerBowler: 4,
+        maxConsecutiveSpell: 2,
+        minRestOvers: 4,
+        powerplayOvers: '1-6 (Max 2 Outside)',
+        notes: 'Cricket Australia Junior Pace Directives: Max 2 consecutive overs per spell, minimum 4 overs rest between spells.'
+      }
+    ];
+
+    function createBlankXI(prefix) {
+      return Array.from({ length: 11 }, (_, i) => ({
+        name: `${prefix} Player ${i + 1}`,
+        status: i < 2 ? 'not out' : 'yet to bat',
+        runs: 0,
+        balls: 0,
+        fours: 0,
+        sixes: 0,
+        onStrike: i === 0
+      }));
+    }
+
+    function createBlankBowlers(prefix) {
+      return Array.from({ length: 6 }, (_, i) => ({
+        id: `b${i + 1}`,
+        name: `${prefix} Bowler ${i + 1}`,
+        overs: 0,
+        balls: 0,
+        maidens: 0,
+        runs: 0,
+        wickets: 0,
+        currentSpellOvers: 0,
+        restOversSinceLastSpell: 0,
+        isBowlingNow: i === 0
+      }));
+    }
+
+    const INITIAL_STATE = {
+      user: null,
+      resendEndpoint: '/api/send-email',
+      activeTab: 'fixtures',
+      activeConnectorTab: 'email',
+      assocFeedUrl: 'https://www.mercantileca.com.au/',
+      assocNotices: [],
+      associations: DEFAULT_ASSOCIATIONS,
+      activeAssocId: 'mca_od',
+      fixtures: [],
+      selectedFixtureId: null,
+      match: {
+        battingTeam: 'Home Team',
+        bowlingTeam: 'Away Team',
+        battingAbbr: 'BATTING XI',
+        scheduledStartMins: 12 * 60,
+        simCurrentMins: 12 * 60,
+        runs: 0,
+        wickets: 0,
+        extras: 0,
+        completedOvers: 0,
+        ballsInCurrentOver: 0,
+        currentOverEvents: [],
+        ballHistory: [],
+        otherEndBowlerId: 'b2',
+        timeLogs: [],
+        homeXI: createBlankXI('Home'),
+        bowlers: createBlankBowlers('Away')
+      }
+    };
+
+    let appState = loadState();
+    let pendingRegistration = null;
+    let pendingPasswordReset = null;
+    let stopwatchInterval = null;
+    let stopwatchSeconds = 0;
+    let liveTickInterval = null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {
+        console.warn('State fallback:', e);
+      }
+      return JSON.parse(JSON.stringify(INITIAL_STATE));
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.warn('Could not persist state:', e);
+      }
+    }
+
+    function loadAccounts() {
+      try {
+        return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveAccounts(accounts) {
+      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+    }
+
+    function getActiveRule() {
+      return appState.associations.find(a => a.id === appState.activeAssocId) || appState.associations[0];
+    }
+
+    // =========================================================================
+    // 2. RESEND EMAIL DISPATCH HELPER
+    // =========================================================================
+    async function dispatchResendEmail({ to, subject, html, text }) {
+      const endpoint = (appState.resendEndpoint || '/api/send-email').trim();
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to, subject, html, text })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          return { ok: false, error: data.error || 'Email API error' };
+        }
+        return { ok: true, id: data.id };
+      } catch (err) {
+        return { ok: false, error: err.message };
+      }
+    }
+
+    function openEmailApiSettingsModal() {
+      const modal = document.getElementById('modal-content');
+      modal.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h3 class="text-lg font-black text-slate-900">Resend Email & Vercel API Settings</h3>
+            <button onclick="closeModal()" class="text-slate-500 font-bold text-lg">✕</button>
+          </div>
+          <p class="text-xs text-slate-600">
+            When hosted on Vercel with <code class="bg-slate-100 px-1 rounded">api/send-email.js</code> and your <code class="bg-slate-100 px-1 rounded">RESEND_API_KEY</code> environment variable, verification emails, welcome emails, and match reports dispatch automatically.
+          </p>
+          <div>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 mb-1">Vercel Serverless Email Endpoint</label>
+            <input id="settings-resend-endpoint" type="text" value="${appState.resendEndpoint || '/api/send-email'}" class="w-full px-3 py-2.5 rounded-xl border-2 border-slate-300 font-mono text-xs font-bold" />
+          </div>
+          <button onclick="saveEmailApiSettings()" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs tap-btn">
+            Save Endpoint
+          </button>
+        </div>
+      `;
+      openModal();
+    }
+
+    function saveEmailApiSettings() {
+      const val = document.getElementById('settings-resend-endpoint').value.trim();
+      appState.resendEndpoint = val || '/api/send-email';
+      saveState();
+      closeModal();
+      showToast(`Resend endpoint saved: ${appState.resendEndpoint}`, 'success');
+    }
+
+    // =========================================================================
+    // 3. EMAIL VERIFICATION, REGISTRATION, SIGN-IN & FORGOT PASSWORD
+    // =========================================================================
+    function switchAuthMode(mode) {
+      ['signin', 'register', 'forgot'].forEach(m => {
+        document.getElementById('auth-panel-' + m).classList.toggle('hidden', m !== mode);
+      });
+      const signInTab = document.getElementById('auth-tab-signin');
+      const regTab = document.getElementById('auth-tab-register');
+      if (mode === 'register') {
+        regTab.classList.add('bg-slate-900', 'text-white');
+        regTab.classList.remove('text-slate-700');
+        signInTab.classList.remove('bg-slate-900', 'text-white');
+        signInTab.classList.add('text-slate-700');
+      } else {
+        signInTab.classList.add('bg-slate-900', 'text-white');
+        signInTab.classList.remove('text-slate-700');
+        regTab.classList.remove('bg-slate-900', 'text-white');
+        regTab.classList.add('text-slate-700');
+      }
+    }
+
+    async function sendEmailVerificationCode() {
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim().toLowerCase();
+      const password = document.getElementById('reg-password').value;
+      const assocId = document.getElementById('reg-assoc').value;
+
+      if (!name || !email || !email.includes('@')) {
+        showToast('Enter your OfficialsHQ name and a valid email address.', 'error');
+        return;
+      }
+      if (password.length < 6) {
+        showToast('Password must be at least 6 characters.', 'error');
+        return;
+      }
+
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      pendingRegistration = { name, email, password, assocId, code };
+
+      document.getElementById('verify-email-display').textContent = email;
+      document.getElementById('register-step-form').classList.add('hidden');
+      document.getElementById('register-step-verify').classList.remove('hidden');
+
+      const result = await dispatchResendEmail({
+        to: email,
+        subject: `${code} is your UltimateUmpiring verification code`,
+        html: `<div style="font-family:sans-serif;padding:20px;"><h2>Verify your UltimateUmpiring Account</h2><p>Hi ${name},</p><p>Your 6-digit verification code is:</p><h1 style="letter-spacing:6px;background:#f1f5f9;padding:12px 20px;display:inline-block;border-radius:8px;">${code}</h1><p>Enter this code in the app to activate your account.</p></div>`,
+        text: `Hi ${name}, your UltimateUmpiring verification code is: ${code}`
+      });
+
+      const hintEl = document.getElementById('verify-fallback-hint');
+      if (result.ok) {
+        hintEl.textContent = 'Check your inbox (and spam folder) for your 6-digit code.';
+        showToast('Verification email sent via Resend!', 'success');
+      } else {
+        hintEl.textContent = `Local/Preview Mode (Resend API offline): Use code ${code}`;
+        showToast('Verification code generated.', 'info');
+      }
+    }
+
+    function backToRegisterForm() {
+      document.getElementById('register-step-verify').classList.add('hidden');
+      document.getElementById('register-step-form').classList.remove('hidden');
+    }
+
+    async function verifyAndCreateAccount() {
+      if (!pendingRegistration) return;
+      const entered = document.getElementById('reg-otp-input').value.trim();
+      if (entered !== pendingRegistration.code) {
+        showToast('Incorrect verification code. Please check your email.', 'error');
+        return;
+      }
+
+      const { name, email, password, assocId } = pendingRegistration;
+      const accounts = loadAccounts();
+      accounts[email] = { name, email, password, assocId };
+      saveAccounts(accounts);
+
+      appState.user = {
+        name,
+        email,
+        homeAssoc: assocId,
+        syncEmail: buildPersonalSyncEmail(name),
+        icalUrl: ''
+      };
+      appState.activeAssocId = assocId;
+      saveState();
+
+      // Send Thank You / Welcome Email via Resend
+      dispatchResendEmail({
+        to: email,
+        subject: 'Welcome to UltimateUmpiring — Thank You for Registering!',
+        html: `<div style="font-family:sans-serif;padding:20px;"><h2>Welcome aboard, ${name}!</h2><p>Thank you for registering with <strong>UltimateUmpiring</strong>.</p><p>Your personal OfficialsHQ inbound sync address is: <code>${appState.user.syncEmail}</code></p><p>You can now approve fixtures, track over-rates and lost minutes, monitor bowler spells, and email official match reports directly from the ground.</p></div>`,
+        text: `Welcome aboard, ${name}! Thank you for registering with UltimateUmpiring.`
+      });
+
+      pendingRegistration = null;
+      enterApp();
+      showToast(`Email verified! Welcome email sent to ${email}.`, 'success');
+    }
+
+    function handleSignIn() {
+      const email = document.getElementById('signin-email').value.trim().toLowerCase();
+      const password = document.getElementById('signin-password').value;
+      const accounts = loadAccounts();
+      const account = accounts[email];
+
+      if (!account || account.password !== password) {
+        showToast('Invalid email or password. Use "Create Account" or "Forgot password?".', 'error');
+        return;
+      }
+
+      appState.user = {
+        name: account.name,
+        email: account.email,
+        homeAssoc: account.assocId,
+        syncEmail: buildPersonalSyncEmail(account.name),
+        icalUrl: appState.user?.icalUrl || ''
+      };
+      saveState();
+      enterApp();
+      showToast(`Signed in as ${account.name}`, 'success');
+    }
+
+    async function sendPasswordResetCode() {
+      const email = document.getElementById('forgot-email').value.trim().toLowerCase();
+      const accounts = loadAccounts();
+      if (!accounts[email]) {
+        showToast('No account found with that email address.', 'error');
+        return;
+      }
+
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      pendingPasswordReset = { email, code };
+
+      document.getElementById('forgot-step-1').classList.add('hidden');
+      document.getElementById('forgot-step-2').classList.remove('hidden');
+
+      const result = await dispatchResendEmail({
+        to: email,
+        subject: `${code} — Reset your UltimateUmpiring Password`,
+        html: `<div style="font-family:sans-serif;padding:20px;"><h2>Password Reset Request</h2><p>Your 6-digit password reset code is: <strong>${code}</strong></p></div>`,
+        text: `Your UltimateUmpiring password reset code is: ${code}`
+      });
+
+      const hint = document.getElementById('forgot-hint');
+      hint.textContent = result.ok
+        ? `Reset code sent to ${email}.`
+        : `Preview Mode: Enter reset code ${code}`;
+    }
+
+    function completePasswordReset() {
+      if (!pendingPasswordReset) return;
+      const code = document.getElementById('forgot-code').value.trim();
+      const newPass = document.getElementById('forgot-new-pass').value;
+
+      if (code !== pendingPasswordReset.code) {
+        showToast('Incorrect reset code.', 'error');
+        return;
+      }
+      if (newPass.length < 6) {
+        showToast('New password must be at least 6 characters.', 'error');
+        return;
+      }
+
+      const accounts = loadAccounts();
+      if (accounts[pendingPasswordReset.email]) {
+        accounts[pendingPasswordReset.email].password = newPass;
+        saveAccounts(accounts);
+      }
+
+      pendingPasswordReset = null;
+      document.getElementById('forgot-step-2').classList.add('hidden');
+      document.getElementById('forgot-step-1').classList.remove('hidden');
+      switchAuthMode('signin');
+      showToast('Password updated! Please sign in with your new password.', 'success');
+    }
+
+    function buildPersonalSyncEmail(name) {
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '') || 'umpire';
+      return `${slug}@sync.umpireassist.com.au`;
+    }
+
+    function logoutUser() {
+      appState.user = null;
+      saveState();
+      document.getElementById('app-shell').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('flex');
+      document.getElementById('auth-screen').classList.remove('hidden');
+    }
+
+    function enterApp() {
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('hidden');
+      document.getElementById('app-shell').classList.add('flex');
+      document.getElementById('header-umpire-name').textContent = appState.user.name;
+      const syncInput = document.getElementById('personal-sync-email');
+      if (syncInput) {
+        syncInput.value = appState.user.syncEmail || buildPersonalSyncEmail(appState.user.name);
+      }
+      renderAll();
+      switchTab(appState.activeTab || 'fixtures');
+    }
+
+    // =========================================================================
+    // 4. CONNECTORS, FIXTURES & PRE-MATCH BRIEFING
+    // =========================================================================
+    function switchConnectorTab(connId) {
+      appState.activeConnectorTab = connId;
+      ['email', 'ical', 'playcricket'].forEach(id => {
+        const panel = document.getElementById('conn-panel-' + id);
+        const btn = document.getElementById('conn-btn-' + id);
+        if (id === connId) {
+          panel.classList.remove('hidden');
+          btn.classList.add('bg-slate-900', 'text-white');
+          btn.classList.remove('text-slate-700', 'hover:bg-white');
+        } else {
+          panel.classList.add('hidden');
+          btn.classList.remove('bg-slate-900', 'text-white');
+          btn.classList.add('text-slate-700', 'hover:bg-white');
+        }
+      });
+    }
+
+    function copySyncEmail() {
+      const input = document.getElementById('personal-sync-email');
+      input.select();
+      document.execCommand('copy');
+      showToast(`Copied ${input.value} to clipboard!`, 'success');
+    }
+
+    function parseOfficialsHqEmail() {
+      const raw = document.getElementById('ohq-email-paste').value.trim();
+      if (!raw) {
+        showToast('Paste your OfficialsHQ appointment email first.', 'error');
+        return;
+      }
+
+      const compMatch = raw.match(/Competition:\s*(.+)/i);
+      const matchTeams = raw.match(/Match:\s*(.+?)\s+vs\s+(.+)/i);
+      const dateMatch = raw.match(/Date:\s*(.+)/i);
+      const timeMatch = raw.match(/Start Time:\s*(.+)/i);
+      const venueMatch = raw.match(/Venue:\s*(.+)/i);
+      const coUmpMatch = raw.match(/Co-Umpire:\s*(.+)/i);
+      const refMatch = raw.match(/Reference:\s*(OHQ-\d+|[A-Z0-9-]+)/i);
+
+      const newId = refMatch ? refMatch[1].trim() : 'OHQ-' + Math.floor(10000 + Math.random() * 89999);
+      const homeTeam = matchTeams ? matchTeams[1].trim() : 'Home XI';
+      const awayTeam = matchTeams ? matchTeams[2].trim() : 'Away XI';
+      const competition = compMatch ? compMatch[1].trim() : getActiveRule().name;
+
+      const newFixture = {
+        id: newId,
+        competition,
+        date: dateMatch ? dateMatch[1].trim() : 'Upcoming Weekend',
+        startTime: timeMatch ? timeMatch[1].trim() : '12:00 PM',
+        ground: venueMatch ? venueMatch[1].trim() : 'Allocated Ground',
+        homeTeam,
+        awayTeam,
+        partnerUmpire: coUmpMatch ? coUmpMatch[1].trim() : 'Appointed Panel',
+        status: 'pending',
+        assocRuleId: appState.activeAssocId
+      };
+
+      appState.fixtures.unshift(newFixture);
+      document.getElementById('ohq-email-paste').value = '';
+      saveState();
+      renderFixtures();
+      showToast(`Added "${homeTeam} vs ${awayTeam}" from email!`, 'success');
+    }
+
+    function saveIcalFeed() {
+      const url = document.getElementById('ohq-ical-url').value.trim();
+      if (!url) {
+        showToast('Paste your personal OfficialsHQ .ics URL first.', 'error');
+        return;
+      }
+      if (appState.user) {
+        appState.user.icalUrl = url;
+        saveState();
+      }
+      document.getElementById('ical-status-text').textContent = 'Status: Saved personal OfficialsHQ .ics feed.';
+      showToast('OfficialsHQ iCal feed saved!', 'success');
+    }
+
+    function importFromPlayCricketUrl() {
+      const homeTeam = document.getElementById('pc-home-input').value.trim() || 'Home XI';
+      const awayTeam = document.getElementById('pc-away-input').value.trim() || 'Away XI';
+      const rawUrl = document.getElementById('pc-match-input').value.trim();
+      const idExtract = rawUrl ? rawUrl.split('/').filter(Boolean).pop() : 'PC-' + Math.floor(1000 + Math.random() * 9000);
+
+      const importedFixture = {
+        id: idExtract.toUpperCase().slice(0, 14),
+        competition: getActiveRule().name,
+        date: 'Match Day',
+        startTime: '12:00 PM',
+        ground: 'PlayCricket Venue',
+        homeTeam,
+        awayTeam,
+        partnerUmpire: appState.user ? appState.user.name : 'Appointed Umpire',
+        status: 'accepted',
+        assocRuleId: appState.activeAssocId
+      };
+
+      appState.fixtures.unshift(importedFixture);
+      appState.selectedFixtureId = importedFixture.id;
+      appState.match.homeXI = createBlankXI(homeTeam.split(' ')[0]);
+      appState.match.bowlers = createBlankBowlers(awayTeam.split(' ')[0]);
+      saveState();
+      renderAll();
+      showToast(`Created match card for ${homeTeam} vs ${awayTeam}!`, 'success');
+    }
+
+    function openAddManualFixtureModal() {
+      const modal = document.getElementById('modal-content');
+      modal.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h3 class="text-base font-black text-slate-900">Add Allocated Fixture</h3>
+            <button onclick="closeModal()" class="text-slate-500 font-bold text-lg">✕</button>
+          </div>
+          <input id="man-home" type="text" placeholder="Home Team (Batting First)" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold" />
+          <input id="man-away" type="text" placeholder="Away Team (Bowling First)" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold" />
+          <input id="man-ground" type="text" placeholder="Ground / Oval Name" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold" />
+          <div class="grid grid-cols-2 gap-2">
+            <input id="man-date" type="text" placeholder="Date (e.g. Sat 28 Nov)" class="px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold" />
+            <input id="man-time" type="text" value="12:00 PM" class="px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold" />
+          </div>
+          <button onclick="saveManualFixture()" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs tap-btn">Save Fixture</button>
+        </div>
+      `;
+      openModal();
+    }
+
+    function saveManualFixture() {
+      const homeTeam = document.getElementById('man-home').value.trim();
+      const awayTeam = document.getElementById('man-away').value.trim();
+      if (!homeTeam || !awayTeam) {
+        showToast('Enter both team names.', 'error');
+        return;
+      }
+      const id = 'FIX-' + Math.floor(1000 + Math.random() * 9000);
+      appState.fixtures.unshift({
+        id,
+        competition: getActiveRule().name,
+        date: document.getElementById('man-date').value.trim() || 'Match Day',
+        startTime: document.getElementById('man-time').value.trim() || '12:00 PM',
+        ground: document.getElementById('man-ground').value.trim() || 'Allocated Ground',
+        homeTeam,
+        awayTeam,
+        partnerUmpire: 'Appointed',
+        status: 'accepted',
+        assocRuleId: appState.activeAssocId
+      });
+      appState.selectedFixtureId = id;
+      appState.match.homeXI = createBlankXI(homeTeam.split(' ')[0]);
+      appState.match.bowlers = createBlankBowlers(awayTeam.split(' ')[0]);
+      saveState();
+      closeModal();
+      renderAll();
+      showToast('Fixture added & ready to load!', 'success');
+    }
+
+    function renderFixtures() {
+      const container = document.getElementById('fixtures-list');
+      if (appState.fixtures.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">No fixtures added yet. Paste an OfficialsHQ appointment email above or click <strong>+ Add Fixture</strong>.</p>`;
+        document.getElementById('prematch-briefing-card').classList.add('hidden');
+        return;
+      }
+
+      container.innerHTML = appState.fixtures.map(fx => {
+        const isAccepted = fx.status === 'accepted';
+        const isRejected = fx.status === 'rejected';
+        const isSelected = appState.selectedFixtureId === fx.id;
+
+        return `
+          <div class="p-3.5 rounded-xl border-2 ${isSelected ? 'border-emerald-600 bg-emerald-50/40' : 'border-slate-200 bg-slate-50'} transition">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-mono text-[11px] font-extrabold px-2 py-0.5 rounded bg-slate-800 text-white">${fx.id}</span>
+                  <span class="text-xs font-extrabold text-emerald-800">${fx.competition}</span>
+                </div>
+                <h4 class="font-black text-base text-slate-900 mt-1">${fx.homeTeam} vs ${fx.awayTeam}</h4>
+                <p class="text-xs font-semibold text-slate-600 mt-0.5">📅 ${fx.date} • ⏰ ${fx.startTime} • 📍 ${fx.ground}</p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                ${isAccepted ? `
+                  <span class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-extrabold text-xs">✓ Approved</span>
+                  <button onclick="selectFixtureBriefing('${fx.id}')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-800 tap-btn">Briefing</button>
+                ` : isRejected ? `
+                  <span class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 font-extrabold text-xs">✕ Declined</span>
+                  <button onclick="updateFixtureStatus('${fx.id}', 'pending')" class="text-xs underline text-slate-500 font-bold">Undo</button>
+                ` : `
+                  <button onclick="updateFixtureStatus('${fx.id}', 'accepted')" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow tap-btn">Approve</button>
+                  <button onclick="updateFixtureStatus('${fx.id}', 'rejected')" class="px-3 py-2 rounded-xl bg-white hover:bg-rose-50 border border-rose-300 text-rose-700 font-extrabold text-xs tap-btn">Reject</button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      renderAssocNotices();
+      const activeFx = appState.fixtures.find(f => f.id === appState.selectedFixtureId) || appState.fixtures.find(f => f.status === 'accepted');
+      const briefingCard = document.getElementById('prematch-briefing-card');
+      if (activeFx && activeFx.status === 'accepted') {
+        briefingCard.classList.remove('hidden');
+        document.getElementById('briefing-match-title').textContent = `${activeFx.homeTeam} vs ${activeFx.awayTeam}`;
+        document.getElementById('briefing-match-sub').textContent = `${activeFx.date} • ${activeFx.startTime} • ${activeFx.ground}`;
+        document.getElementById('briefing-home-label').textContent = `${activeFx.homeTeam} (Bat)`;
+        document.getElementById('briefing-away-label').textContent = `${activeFx.awayTeam} (Bowl)`;
+        document.getElementById('briefing-home-xi').textContent = appState.match.homeXI.map(p => p.name).join(', ');
+        document.getElementById('briefing-away-xi').textContent = appState.match.bowlers.map(b => b.name).join(', ');
+      } else {
+        briefingCard.classList.add('hidden');
+      }
+    }
+
+    function updateFixtureStatus(fixtureId, status) {
+      const fx = appState.fixtures.find(f => f.id === fixtureId);
+      if (!fx) return;
+      fx.status = status;
+      if (status === 'accepted') {
+        appState.selectedFixtureId = fixtureId;
+        showToast(`Fixture approved! Briefing & live match controls unlocked.`, 'success');
+      }
+      saveState();
+      renderAll();
+    }
+
+    function selectFixtureBriefing(fixtureId) {
+      appState.selectedFixtureId = fixtureId;
+      saveState();
+      renderFixtures();
+    }
+
+    function openEditSquadsModal() {
+      const modal = document.getElementById('modal-content');
+      const batNames = appState.match.homeXI.map(p => p.name).join('\n');
+      const bowlNames = appState.match.bowlers.map(b => b.name).join('\n');
+      modal.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h3 class="text-base font-black text-slate-900">Edit Playing Squads (One Name Per Line)</h3>
+            <button onclick="closeModal()" class="text-slate-500 font-bold text-lg">✕</button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Batting Team (11)</label>
+              <textarea id="edit-bat-xi" rows="11" class="w-full p-2 rounded-xl border border-slate-300 text-xs font-mono">${batNames}</textarea>
+            </div>
+            <div>
+              <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Bowlers (Up to 11)</label>
+              <textarea id="edit-bowl-xi" rows="11" class="w-full p-2 rounded-xl border border-slate-300 text-xs font-mono">${bowlNames}</textarea>
+            </div>
+          </div>
+          <button onclick="saveEditedSquads()" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs tap-btn">Save Player Names</button>
+        </div>
+      `;
+      openModal();
+    }
+
+    function saveEditedSquads() {
+      const batLines = document.getElementById('edit-bat-xi').value.split('\n').map(s => s.trim()).filter(Boolean);
+      const bowlLines = document.getElementById('edit-bowl-xi').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+      if (batLines.length > 0) {
+        appState.match.homeXI = batLines.map((name, i) => ({
+          name,
+          status: appState.match.homeXI[i]?.status || (i < 2 ? 'not out' : 'yet to bat'),
+          runs: appState.match.homeXI[i]?.runs || 0,
+          balls: appState.match.homeXI[i]?.balls || 0,
+          fours: appState.match.homeXI[i]?.fours || 0,
+          sixes: appState.match.homeXI[i]?.sixes || 0,
+          onStrike: appState.match.homeXI[i]?.onStrike ?? (i === 0)
+        }));
+      }
+
+      if (bowlLines.length > 0) {
+        appState.match.bowlers = bowlLines.map((name, i) => ({
+          id: appState.match.bowlers[i]?.id || `b${i + 1}`,
+          name,
+          overs: appState.match.bowlers[i]?.overs || 0,
+          balls: appState.match.bowlers[i]?.balls || 0,
+          maidens: appState.match.bowlers[i]?.maidens || 0,
+          runs: appState.match.bowlers[i]?.runs || 0,
+          wickets: appState.match.bowlers[i]?.wickets || 0,
+          currentSpellOvers: appState.match.bowlers[i]?.currentSpellOvers || 0,
+          restOversSinceLastSpell: appState.match.bowlers[i]?.restOversSinceLastSpell || 0,
+          isBowlingNow: appState.match.bowlers[i]?.isBowlingNow ?? (i === 0)
+        }));
+      }
+
+      saveState();
+      closeModal();
+      renderAll();
+      showToast('Squad player names updated!', 'success');
+    }
+
+    function renderAssocNotices() {
+      const urlInput = document.getElementById('assoc-feed-url');
+      const linkEl = document.getElementById('assoc-feed-link');
+      if (urlInput) urlInput.value = appState.assocFeedUrl || 'https://www.mercantileca.com.au/';
+      if (linkEl) linkEl.href = appState.assocFeedUrl || 'https://www.mercantileca.com.au/';
+      const list = document.getElementById('assoc-notices-list');
+      if (!list) return;
+      if (!appState.assocNotices || appState.assocNotices.length === 0) {
+        list.innerHTML = `<li class="text-slate-500 italic">No custom notices added yet.</li>`;
+        return;
+      }
+      list.innerHTML = appState.assocNotices.map(n => `
+        <li class="flex items-start gap-1.5">
+          <span class="text-amber-600 font-black">•</span>
+          <span><strong>${n.title}:</strong> ${n.body}</span>
+        </li>
+      `).join('');
+    }
+
+    function updateAssocFeedUrl(newUrl) {
+      appState.assocFeedUrl = newUrl.trim() || 'https://www.mercantileca.com.au/';
+      saveState();
+      renderAssocNotices();
+    }
+
+    function addCustomAssociationNotice() {
+      const modal = document.getElementById('modal-content');
+      modal.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h3 class="text-base font-black text-slate-900">Add Association Weekend Notice</h3>
+            <button onclick="closeModal()" class="text-slate-500 font-bold text-lg">✕</button>
+          </div>
+          <input id="custom-notice-title" type="text" placeholder="Headline (e.g. Heat Policy / Ground Change)" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold" />
+          <textarea id="custom-notice-body" rows="2" placeholder="Details from association website..." class="w-full p-2.5 rounded-xl border-2 border-slate-300 text-xs"></textarea>
+          <button onclick="saveCustomNotice()" class="w-full py-2.5 rounded-xl bg-amber-600 text-white font-extrabold text-xs tap-btn">Save Notice</button>
+        </div>
+      `;
+      openModal();
+    }
+
+    function saveCustomNotice() {
+      const title = document.getElementById('custom-notice-title').value.trim();
+      const body = document.getElementById('custom-notice-body').value.trim();
+      if (!title || !body) return;
+      appState.assocNotices.unshift({ id: Date.now(), title, body });
+      saveState();
+      closeModal();
+      renderAssocNotices();
+    }
+
+    function loadFixtureIntoLiveMatch() {
+      const fx = appState.fixtures.find(f => f.id === appState.selectedFixtureId);
+      if (fx) {
+        appState.match.battingTeam = fx.homeTeam;
+        appState.match.bowlingTeam = fx.awayTeam;
+        appState.match.battingAbbr = fx.homeTeam.split(' ').slice(0, 2).join(' ').toUpperCase();
+        saveState();
+        renderAll();
+      }
+      switchTab('live');
+      showToast('Match loaded into Live Command Center.', 'success');
+    }
+
+    // =========================================================================
+    // 5. LIVE OVER-RATE, LOST/ADDED MINUTES & CLOSE-OF-PLAY ENGINE
+    // =========================================================================
+    function switchTab(tabId) {
+      appState.activeTab = tabId;
+      saveState();
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+      const activePanel = document.getElementById('tab-' + tabId);
+      if (activePanel) activePanel.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.dataset.tab === tabId) {
+          btn.classList.add('text-emerald-400', 'bg-slate-900');
+          btn.classList.remove('text-slate-400');
+        } else {
+          btn.classList.remove('text-emerald-400', 'bg-slate-900');
+          btn.classList.add('text-slate-400');
+        }
+      });
+    }
+
+    function formatMinutesToClock(totalMins) {
+      const wrapped = ((Math.round(totalMins) % 1440) + 1440) % 1440;
+      const hrs = Math.floor(wrapped / 60);
+      const mins = wrapped % 60;
+      return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+    }
+
+    function setMatchStartTimeNow() {
+      const now = new Date();
+      const minsNow = now.getHours() * 60 + now.getMinutes();
+      appState.match.scheduledStartMins = minsNow;
+      appState.match.simCurrentMins = minsNow;
+      saveState();
+      renderLiveStatusBanner();
+      showToast(`Match start clock set to ${formatMinutesToClock(minsNow)}.`, 'success');
+    }
+
+    function calculateMatchTimeMetrics() {
+      const rule = getActiveRule();
+      const m = appState.match;
+
+      let rawLostMins = 0;
+      let addedMins = 0;
+      m.timeLogs.forEach(entry => {
+        if (entry.isAdded) addedMins += Number(entry.minutes) || 0;
+        else rawLostMins += Number(entry.minutes) || 0;
+      });
+
+      const netLostAfterGrace = Math.max(0, rawLostMins - rule.graceMins);
+      const oversDeducted = Math.floor(netLostAfterGrace / rule.deductionRateMinsPerOver);
+      const effectiveMaxOvers = Math.max(5, rule.oversPerInnings - oversDeducted);
+
+      const baseScheduledMins = Math.round(rule.oversPerInnings * rule.minsPerOver);
+      const adjustedCloseMins = m.scheduledStartMins + baseScheduledMins + rawLostMins + addedMins;
+
+      const grossElapsedMins = Math.max(0, m.simCurrentMins - m.scheduledStartMins);
+      const activePlayMins = Math.max(0, grossElapsedMins - rawLostMins);
+
+      const oversBowledDecimal = m.completedOvers + (m.ballsInCurrentOver / 6);
+      const requiredOversByNow = Math.min(effectiveMaxOvers, activePlayMins / rule.minsPerOver);
+
+      const overDiff = oversBowledDecimal - requiredOversByNow;
+      const minsDiff = Math.round(overDiff * rule.minsPerOver);
+
+      return {
+        rule,
+        rawLostMins,
+        addedMins,
+        netLostAfterGrace,
+        oversDeducted,
+        effectiveMaxOvers,
+        adjustedCloseMins,
+        oversBowledDecimal,
+        requiredOversByNow,
+        overDiff,
+        minsDiff
+      };
+    }
+
+    function renderLiveStatusBanner() {
+      const metrics = calculateMatchTimeMetrics();
+      const m = appState.match;
+
+      document.getElementById('banner-team-abbr').textContent = m.battingAbbr;
+      document.getElementById('banner-score').textContent = `${m.runs}/${m.wickets}`;
+      document.getElementById('banner-overs').textContent = `(${m.completedOvers}.${m.ballsInCurrentOver} / ${metrics.effectiveMaxOvers} ov)`;
+      document.getElementById('banner-clock').textContent = formatMinutesToClock(m.simCurrentMins);
+      document.getElementById('banner-close-time').textContent = formatMinutesToClock(metrics.adjustedCloseMins);
+      document.getElementById('banner-req-overs').textContent = `${metrics.requiredOversByNow.toFixed(1)} ov`;
+      document.getElementById('banner-net-lost').textContent = `${metrics.rawLostMins}m (Net ${metrics.netLostAfterGrace}m)`;
+      document.getElementById('banner-rule-tag').textContent = `${metrics.rule.shortName} (${metrics.rule.minsPerOver.toFixed(1)}m/ov)`;
+
+      const pacingBar = document.getElementById('banner-pacing-bar');
+      const pacingText = document.getElementById('banner-pacing-text');
+
+      if (metrics.minsDiff >= 1) {
+        pacingBar.className = 'mt-2 px-3 py-1.5 rounded-xl bg-emerald-100 border border-emerald-400 flex items-center justify-between text-xs font-extrabold text-emerald-950';
+        pacingText.textContent = `✅ +${Math.abs(metrics.overDiff).toFixed(1)} OVERS AHEAD (+${metrics.minsDiff} MINS)`;
+      } else if (metrics.minsDiff <= -4) {
+        pacingBar.className = 'mt-2 px-3 py-1.5 rounded-xl bg-rose-100 border-2 border-rose-500 flex items-center justify-between text-xs font-extrabold text-rose-950';
+        pacingText.textContent = `🚨 ${Math.abs(metrics.overDiff).toFixed(1)} OVERS BEHIND (${metrics.minsDiff} MINS) — WARN CAPTAIN`;
+      } else {
+        pacingBar.className = 'mt-2 px-3 py-1.5 rounded-xl bg-amber-100 border border-amber-400 flex items-center justify-between text-xs font-extrabold text-amber-950';
+        pacingText.textContent = `⏱️ ON SCHEDULE (${metrics.minsDiff >= 0 ? '+' : ''}${metrics.minsDiff} MINS)`;
+      }
+
+      document.getElementById('header-assoc-badge').textContent = metrics.rule.name.split('—')[0].trim();
+    }
+
+    function advanceSimClock(deltaMins) {
+      appState.match.simCurrentMins += deltaMins;
+      saveState();
+      renderLiveStatusBanner();
+    }
+
+    function toggleLiveRealTimeTick() {
+      const btn = document.getElementById('live-tick-btn');
+      if (liveTickInterval) {
+        clearInterval(liveTickInterval);
+        liveTickInterval = null;
+        btn.textContent = '▶ Live Clock: OFF';
+        btn.classList.replace('bg-rose-600', 'bg-emerald-600');
+      } else {
+        btn.textContent = '⏸ Live Clock: ON';
+        btn.classList.replace('bg-emerald-600', 'bg-rose-600');
+        liveTickInterval = setInterval(() => {
+          advanceSimClock(1);
+        }, 60000);
+      }
+    }
+
+    // =========================================================================
+    // 6. BALL-BY-BALL, BOWLERS, TIME LOGS & REPORTS
+    // =========================================================================
+    function getActiveBowler() {
+      return appState.match.bowlers.find(b => b.isBowlingNow) || appState.match.bowlers[0];
+    }
+
+    function changeActiveBowler(bowlerId) {
+      const prevActive = getActiveBowler();
+      if (prevActive && prevActive.id !== bowlerId) {
+        appState.match.otherEndBowlerId = prevActive.id;
+      }
+      appState.match.bowlers.forEach(b => {
+        b.isBowlingNow = (b.id === bowlerId);
+      });
+      saveState();
+      renderLiveMatchControls();
+      renderBowlers();
+    }
+
+    function changeOtherEndBowler(bowlerId) {
+      appState.match.otherEndBowlerId = bowlerId;
+      saveState();
+    }
+
+    function recordBall(label, runsToAdd, countsAsLegalBall, isWicket = false, dismissalNote = '') {
+      const m = appState.match;
+      const bowler = getActiveBowler();
+      const striker = m.homeXI.find(p => p.onStrike && p.status === 'not out') || m.homeXI.find(p => p.status === 'not out');
+
+      m.ballHistory.push(JSON.stringify({
+        runs: m.runs,
+        wickets: m.wickets,
+        extras: m.extras,
+        completedOvers: m.completedOvers,
+        ballsInCurrentOver: m.ballsInCurrentOver,
+        currentOverEvents: [...m.currentOverEvents],
+        simCurrentMins: m.simCurrentMins,
+        bowlers: JSON.parse(JSON.stringify(m.bowlers)),
+        homeXI: JSON.parse(JSON.stringify(m.homeXI))
+      }));
+
+      m.runs += runsToAdd;
+      m.currentOverEvents.push(label);
+
+      if (label === 'Wd' || label === 'Nb') {
+        m.extras += runsToAdd;
+        bowler.runs += runsToAdd;
+      } else if (label === 'B' || label === 'Lb') {
+        m.extras += runsToAdd;
+      } else if (striker) {
+        striker.runs += runsToAdd;
+        if (countsAsLegalBall) striker.balls += 1;
+        if (runsToAdd === 4) striker.fours += 1;
+        if (runsToAdd === 6) striker.sixes += 1;
+      }
+
+      if (label !== 'B' && label !== 'Lb' && label !== 'Wd' && label !== 'Nb') {
+        bowler.runs += runsToAdd;
+      }
+
+      if (isWicket) {
+        m.wickets += 1;
+        bowler.wickets += 1;
+        if (striker) {
+          striker.status = dismissalNote || `b ${bowler.name}`;
+          striker.onStrike = false;
+          const nextBatter = m.homeXI.find(p => p.status === 'yet to bat');
+          if (nextBatter) {
+            nextBatter.status = 'not out';
+            nextBatter.onStrike = true;
+          }
+        }
+      }
+
+      if (countsAsLegalBall) {
+        m.ballsInCurrentOver += 1;
+        bowler.balls += 1;
+        if (m.ballsInCurrentOver >= 6) {
+          completeOverTransition(bowler);
+        }
+      }
+
+      saveState();
+      renderAll();
+    }
+
+    function completeOverTransition(bowler) {
+      const m = appState.match;
+      m.completedOvers += 1;
+      m.ballsInCurrentOver = 0;
+
+      bowler.overs += 1;
+      bowler.balls = 0;
+      bowler.currentSpellOvers += 1;
+      bowler.restOversSinceLastSpell = 0;
+
+      m.bowlers.forEach(b => {
+        if (b.id !== bowler.id) {
+          b.restOversSinceLastSpell += 1;
+          b.currentSpellOvers = 0;
+        }
+      });
+
+      const nextEndId = m.otherEndBowlerId;
+      if (nextEndId && nextEndId !== bowler.id) {
+        m.otherEndBowlerId = bowler.id;
+        m.bowlers.forEach(b => {
+          b.isBowlingNow = (b.id === nextEndId);
+        });
+      }
+
+      m.currentOverEvents = [];
+      const newBowler = getActiveBowler();
+      showToast(`Over ${m.completedOvers} complete! Ends changed — ${newBowler.name} active.`, 'info');
+    }
+
+    function forceEndOver() {
+      completeOverTransition(getActiveBowler());
+      saveState();
+      renderAll();
+    }
+
+    function undoLastBall() {
+      const m = appState.match;
+      if (!m.ballHistory || m.ballHistory.length === 0) return;
+      Object.assign(m, JSON.parse(m.ballHistory.pop()));
+      saveState();
+      renderAll();
+    }
+
+    function openWicketModal() {
+      const bowler = getActiveBowler();
+      const modal = document.getElementById('modal-content');
+      modal.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h3 class="text-lg font-black text-rose-700">Record Dismissal (MCC Laws 32–39)</h3>
+            <button onclick="closeModal()" class="text-slate-500 font-bold text-lg">✕</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <button onclick="confirmWicket('b ${bowler.name}')" class="p-3 rounded-xl bg-slate-100 hover:bg-rose-50 border-2 border-slate-300 font-extrabold text-sm text-left tap-btn">Bowled (Law 32)</button>
+            <button onclick="confirmWicket('c Fielder b ${bowler.name}')" class="p-3 rounded-xl bg-slate-100 hover:bg-rose-50 border-2 border-slate-300 font-extrabold text-sm text-left tap-btn">Caught (Law 33)</button>
+            <button onclick="confirmWicket('lbw b ${bowler.name}')" class="p-3 rounded-xl bg-slate-100 hover:bg-rose-50 border-2 border-slate-300 font-extrabold text-sm text-left tap-btn">LBW (Law 36)</button>
+            <button onclick="confirmWicket('run out')" class="p-3 rounded-xl bg-slate-100 hover:bg-rose-50 border-2 border-slate-300 font-extrabold text-sm text-left tap-btn">Run Out (Law 38)</button>
+            <button onclick="confirmWicket('st wk b ${bowler.name}')" class="p-3 rounded-xl bg-slate-100 hover:bg-rose-50 border-2 border-slate-300 font-extrabold text-sm text-left tap-btn">Stumped (Law 39)</button>
+            <button onclick="confirmWicket('hit wicket b ${bowler.name}')" class="p-3 rounded-xl bg-slate-100 hover:bg-rose-50 border-2 border-slate-300 font-extrabold text-sm text-left tap-btn">Hit Wicket (Law 35)</button>
+          </div>
+        </div>
+      `;
+      openModal();
+    }
+
+    function confirmWicket(dismissalText) {
+      closeModal();
+      recordBall('W', 0, true, true, dismissalText);
+    }
+
+    function triggerDrinksTimer() {
+      showToast('Drinks Break (4 mins) started.', 'info');
+    }
+
+    function renderLiveMatchControls() {
+      const m = appState.match;
+      const rule = getActiveRule();
+      const bowler = getActiveBowler();
+
+      document.getElementById('live-powerplay-badge').textContent = `PP: ${rule.powerplayOvers}`;
+
+      const select = document.getElementById('active-bowler-select');
+      select.innerHTML = m.bowlers.map(b => `
+        <option value="${b.id}" ${b.isBowlingNow ? 'selected' : ''}>${b.name} (${b.overs}.${b.balls} ov)</option>
+      `).join('');
+
+      const otherSelect = document.getElementById('other-end-bowler-select');
+      if (otherSelect) {
+        otherSelect.innerHTML = m.bowlers.map(b => `
+          <option value="${b.id}" ${b.id === m.otherEndBowlerId ? 'selected' : ''}>${b.name} (${b.overs}.${b.balls})</option>
+        `).join('');
+      }
+
+      document.getElementById('active-bowler-spell-info').textContent =
+        `${bowler.overs}.${bowler.balls}-${bowler.maidens}-${bowler.runs}-${bowler.wickets} • Spell: ${bowler.currentSpellOvers + 1} ov (Max ${rule.maxConsecutiveSpell})`;
+
+      const ballsContainer = document.getElementById('current-over-balls');
+      if (ballsContainer) {
+        ballsContainer.innerHTML = m.currentOverEvents.map(ev => {
+          let cls = 'bg-slate-200 text-slate-900';
+          if (ev === '4') cls = 'bg-emerald-600 text-white';
+          else if (ev === '6') cls = 'bg-indigo-600 text-white';
+          else if (ev === 'W') cls = 'bg-rose-600 text-white';
+          else if (ev === 'Wd' || ev === 'Nb') cls = 'bg-amber-300 text-amber-950';
+          return `<span class="w-7 h-7 rounded-full ${cls} font-mono font-extrabold text-xs flex items-center justify-center shadow-2xs">${ev}</span>`;
+        }).join('');
+      }
+    }
+
+    function toggleStoppageTimer() {
+      const btn = document.getElementById('stopwatch-toggle-btn');
+      if (stopwatchInterval) {
+        clearInterval(stopwatchInterval);
+        stopwatchInterval = null;
+        btn.textContent = '▶ Resume Stoppage';
+        btn.classList.replace('bg-rose-500', 'bg-amber-500');
+      } else {
+        btn.textContent = '⏸ Pause Timer';
+        btn.classList.replace('bg-amber-500', 'bg-rose-500');
+        stopwatchInterval = setInterval(() => {
+          stopwatchSeconds += 1;
+          const mins = Math.floor(stopwatchSeconds / 60);
+          const secs = stopwatchSeconds % 60;
+          document.getElementById('stopwatch-display').textContent =
+            `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }, 1000);
+      }
+    }
+
+    function captureStopwatchMinutes() {
+      const mins = Math.max(1, Math.ceil(stopwatchSeconds / 60));
+      document.getElementById('time-event-mins').value = mins;
+    }
+
+    function addTimeLogEntry() {
+      const type = document.getElementById('time-event-type').value;
+      const mins = parseInt(document.getElementById('time-event-mins').value, 10);
+      const comment = document.getElementById('time-event-comment').value.trim();
+
+      if (!mins || mins <= 0 || !comment) {
+        showToast('Enter valid minutes and a comment.', 'error');
+        return;
+      }
+
+      const isAdded = type.startsWith('Added:');
+      appState.match.timeLogs.unshift({
+        id: Date.now(),
+        type,
+        minutes: mins,
+        comment,
+        timestamp: formatMinutesToClock(appState.match.simCurrentMins),
+        isAdded
+      });
+
+      if (!isAdded) appState.match.simCurrentMins += mins;
+      document.getElementById('time-event-comment').value = '';
+      if (stopwatchInterval) toggleStoppageTimer();
+      stopwatchSeconds = 0;
+      document.getElementById('stopwatch-display').textContent = '00:00';
+
+      saveState();
+      renderAll();
+    }
+
+    function deleteTimeLogEntry(id) {
+      appState.match.timeLogs = appState.match.timeLogs.filter(t => t.id !== id);
+      saveState();
+      renderAll();
+    }
+
+    function renderTimeLogs() {
+      const metrics = calculateMatchTimeMetrics();
+      document.getElementById('ledger-grace-display').textContent = `${metrics.rule.graceMins}m`;
+      document.getElementById('ledger-overs-deducted').textContent = `${metrics.oversDeducted} ov`;
+
+      const list = document.getElementById('time-log-list');
+      if (appState.match.timeLogs.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-400 italic py-2">No lost or added minutes documented yet.</p>`;
+        return;
+      }
+
+      list.innerHTML = appState.match.timeLogs.map(item => `
+        <div class="p-2.5 rounded-xl border ${item.isAdded ? 'bg-emerald-50 border-emerald-300' : 'bg-amber-50 border-amber-300'} flex items-start justify-between gap-2 text-xs">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold ${item.isAdded ? 'text-emerald-900' : 'text-amber-950'}">${item.type}</span>
+              <span class="font-mono font-black px-1.5 py-0.5 rounded bg-white border border-slate-300">${item.isAdded ? '+' : '-'}${item.minutes}m</span>
+              <span class="text-[11px] font-mono text-slate-500">@ ${item.timestamp}</span>
+            </div>
+            <p class="text-slate-700 font-medium mt-1">"${item.comment}"</p>
+          </div>
+          <button onclick="deleteTimeLogEntry(${item.id})" class="text-slate-400 hover:text-rose-600 font-bold px-1">✕</button>
+        </div>
+      `).join('');
+    }
+
+    function changeBowlingRestrictionProfile(profile) {
+      const rule = getActiveRule();
+      if (profile === 'u13') {
+        rule.maxOversPerBowler = 4;
+        rule.maxConsecutiveSpell = 2;
+        rule.minRestOvers = 4;
+      } else if (profile === 'u15') {
+        rule.maxOversPerBowler = 5;
+        rule.maxConsecutiveSpell = 3;
+        rule.minRestOvers = 3;
+      } else {
+        rule.maxOversPerBowler = Math.max(8, Math.floor(rule.oversPerInnings / 5));
+        rule.maxConsecutiveSpell = rule.maxOversPerBowler;
+        rule.minRestOvers = 0;
+      }
+      saveState();
+      renderAll();
+    }
+
+    function renderBowlers() {
+      const rule = getActiveRule();
+      const bowlers = appState.match.bowlers;
+      const alerts = [];
+
+      const container = document.getElementById('bowlers-list');
+      container.innerHTML = bowlers.map(b => {
+        const oversFormatted = `${b.overs}.${b.balls}`;
+        const quotaReached = b.overs >= rule.maxOversPerBowler;
+        const spellBreached = b.isBowlingNow && b.currentSpellOvers >= rule.maxConsecutiveSpell;
+        const needsRest = !b.isBowlingNow && b.overs > 0 && b.restOversSinceLastSpell < rule.minRestOvers;
+
+        if (quotaReached) alerts.push(`${b.name} has reached maximum quota (${rule.maxOversPerBowler} overs).`);
+        if (spellBreached) alerts.push(`${b.name} has reached max consecutive spell (${rule.maxConsecutiveSpell} overs).`);
+
+        return `
+          <div class="p-3 rounded-xl border-2 ${b.isBowlingNow ? 'border-emerald-600 bg-emerald-50/50' : quotaReached ? 'border-rose-300 bg-rose-50/40' : 'border-slate-200 bg-slate-50'} flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-black text-sm text-slate-900">${b.name}</span>
+                ${b.isBowlingNow ? `<span class="px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-extrabold uppercase">Bowling Now</span>` : ''}
+                ${quotaReached ? `<span class="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-extrabold uppercase">Max Quota (${rule.maxOversPerBowler})</span>` : ''}
+                ${needsRest ? `<span class="px-2 py-0.5 rounded bg-amber-500 text-slate-950 text-[10px] font-extrabold uppercase">Rest: ${b.restOversSinceLastSpell}/${rule.minRestOvers} ov</span>` : ''}
+              </div>
+              <p class="text-xs font-mono font-bold text-slate-600 mt-1">
+                Figures: <span class="text-slate-900">${oversFormatted}-${b.maidens}-${b.runs}-${b.wickets}</span> •
+                Spell: ${b.currentSpellOvers}/${rule.maxConsecutiveSpell} ov •
+                Rest: ${b.restOversSinceLastSpell} ov
+              </p>
+            </div>
+            <button onclick="changeActiveBowler('${b.id}')" ${quotaReached ? 'disabled' : ''} class="px-3 py-2 rounded-xl ${b.isBowlingNow ? 'bg-slate-900 text-white' : quotaReached ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-white border border-slate-300 text-slate-900'} text-xs font-extrabold tap-btn">
+              ${b.isBowlingNow ? 'Active' : 'Set Bowler'}
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      const alertBox = document.getElementById('bowler-alerts-box');
+      if (alerts.length > 0) {
+        alertBox.classList.remove('hidden');
+        alertBox.innerHTML = '⚠️ BOWLING RESTRICTION ALERTS:<br>' + alerts.map(a => `• ${a}`).join('<br>');
+      } else {
+        alertBox.classList.add('hidden');
+      }
+    }
+
+    function renderAssociations() {
+      const grid = document.getElementById('association-cards-grid');
+      grid.innerHTML = appState.associations.map(assoc => {
+        const isActive = assoc.id === appState.activeAssocId;
+        return `
+          <div onclick="selectAssociationRule('${assoc.id}')" class="cursor-pointer p-3.5 rounded-xl border-2 ${isActive ? 'border-emerald-600 bg-emerald-50' : 'border-slate-200 bg-slate-50 hover:border-slate-400'} transition">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-mono text-[11px] font-extrabold px-2 py-0.5 rounded ${isActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-800'}">${assoc.shortName}</span>
+              ${isActive ? `<span class="text-xs font-black text-emerald-800">✓ ACTIVE</span>` : ''}
+            </div>
+            <h4 class="font-black text-sm text-slate-900 mt-1.5">${assoc.name}</h4>
+            <p class="text-[11px] font-mono font-bold text-slate-700 mt-1">
+              ${assoc.oversPerInnings} ov • ${assoc.minsPerOver}m/ov • Grace ${assoc.graceMins}m • Max ${assoc.maxOversPerBowler} ov/bowler
+            </p>
+            <p class="text-[11px] text-slate-600 mt-1">${assoc.notes}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectAssociationRule(assocId) {
+      appState.activeAssocId = assocId;
+      saveState();
+      renderAll();
+    }
+
+    function handleRuleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('new-assoc-raw-rules').value = e.target.result;
+        parseRawRuleText();
+      };
+      reader.readAsText(file);
+    }
+
+    function parseRawRuleText() {
+      const raw = document.getElementById('new-assoc-raw-rules').value;
+      if (!raw.trim()) return;
+      const oversMatch = raw.match(/(\d{2})\s*overs/i);
+      const minsMatch = raw.match(/(\d+(?:\.\d+)?)\s*mins?\s*(?:per|\/)\s*over/i);
+      const graceMatch = raw.match(/(\d+)\s*mins?\s*grace/i);
+      const bowlerMatch = raw.match(/max(?:imum)?\s*(\d+)\s*overs?\s*per\s*bowler/i);
+      const spellMatch = raw.match(/spell\s*(?:of\s*)?(\d+)\s*overs?/i);
+      const restMatch = raw.match(/rest\s*(?:of\s*)?(\d+)\s*overs?/i);
+
+      if (oversMatch) document.getElementById('rule-overs').value = oversMatch[1];
+      if (minsMatch) document.getElementById('rule-mins-per-over').value = minsMatch[1];
+      if (graceMatch) document.getElementById('rule-grace').value = graceMatch[1];
+      if (bowlerMatch) document.getElementById('rule-max-bowler').value = bowlerMatch[1];
+      if (spellMatch) document.getElementById('rule-max-spell').value = spellMatch[1];
+      if (restMatch) document.getElementById('rule-min-rest').value = restMatch[1];
+      showToast('Parameters extracted from text!', 'success');
+    }
+
+    function saveNewAssociation() {
+      const name = document.getElementById('new-assoc-name').value.trim();
+      if (!name) {
+        showToast('Enter the Association Name.', 'error');
+        return;
+      }
+      const website = document.getElementById('new-assoc-url').value.trim() || 'https://play.cricket.com.au/';
+      const overs = parseInt(document.getElementById('rule-overs').value, 10) || 40;
+      const minsPerOver = parseFloat(document.getElementById('rule-mins-per-over').value) || 4.0;
+      const grace = parseInt(document.getElementById('rule-grace').value, 10) || 8;
+      const maxBowler = parseInt(document.getElementById('rule-max-bowler').value, 10) || 8;
+      const maxSpell = parseInt(document.getElementById('rule-max-spell').value, 10) || maxBowler;
+      const minRest = parseInt(document.getElementById('rule-min-rest').value, 10) || 0;
+      const rawNotes = document.getElementById('new-assoc-raw-rules').value.trim();
+
+      const newId = 'custom_' + Date.now();
+      appState.associations.unshift({
+        id: newId,
+        name,
+        shortName: name.split(' ')[0].toUpperCase() + ` ${overs}-Ov`,
+        website,
+        oversPerInnings: overs,
+        minsPerOver,
+        graceMins: grace,
+        deductionRateMinsPerOver: minsPerOver,
+        maxOversPerBowler: maxBowler,
+        maxConsecutiveSpell: maxSpell,
+        minRestOvers: minRest,
+        powerplayOvers: `1-${Math.max(1, Math.round(overs * 0.2))} (P1)`,
+        notes: rawNotes ? rawNotes.slice(0, 140) : `Custom Ruleset (${overs} overs @ ${minsPerOver}m/ov).`
+      });
+
+      appState.activeAssocId = newId;
+      saveState();
+      renderAll();
+      showToast(`Activated "${name}"!`, 'success');
+    }
+
+    const MCC_LAWS_DATA = [
+      { code: 'Law 11', title: 'Intervals & Drinks', text: 'Drinks intervals may not exceed 5 minutes (4 mins under MCA By-Laws). Unscheduled drinks require umpire consent and time logging.' },
+      { code: 'Law 17', title: 'Practice on the Field', text: 'No practice on the pitch or square on any day of the match. Trial run-ups permitted only if they do not waste time or damage the pitch.' },
+      { code: 'Law 21', title: 'No Ball (Height & Front Foot)', text: 'Full-pitched delivery passing above waist height of striker standing upright at popping crease is a No Ball.' },
+      { code: 'Law 22', title: 'Wide Ball', text: 'Ball passing wide of striker where they cannot hit it with a normal cricket stroke from their guard position.' },
+      { code: 'Law 24', title: "Fielder's Absence & Penalty Time", text: 'If a fielder is absent for >8 minutes, they must serve penalty time before bowling or batting.' },
+      { code: 'Law 41.9', title: 'Time Wasting by Fielding Side', text: 'First instance: First and Final Warning to captain. Subsequent instance: 5 penalty runs awarded to batting side.' },
+      { code: 'Law 42', title: "Players' Conduct (Levels 1–4)", text: 'Level 1: Warning. Level 2: 5 penalty runs. Level 3: 5 penalty runs + 10-over suspension. Level 4: Removal from match.' }
+    ];
+
+    function filterMccLaws(query) {
+      const q = query.toLowerCase().trim();
+      const filtered = MCC_LAWS_DATA.filter(l =>
+        l.code.toLowerCase().includes(q) || l.title.toLowerCase().includes(q) || l.text.toLowerCase().includes(q)
+      );
+      const container = document.getElementById('mcc-laws-list');
+      if (!container) return;
+      container.innerHTML = filtered.map(l => `
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <p class="font-extrabold text-slate-900">${l.code} — ${l.title}</p>
+          <p class="text-slate-600 mt-0.5">${l.text}</p>
+        </div>
+      `).join('');
+    }
+
+    function openLawsModal() {
+      const modal = document.getElementById('modal-content');
+      modal.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h3 class="text-lg font-black text-slate-900">MCC Laws Quick Field Guide</h3>
+            <button onclick="closeModal()" class="text-slate-500 font-bold text-lg">✕</button>
+          </div>
+          <input type="text" oninput="filterMccLaws(this.value)" placeholder="Search Law 11, 17, 21, 22, 24, 41, 42..." class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold bg-slate-50" />
+          <div id="mcc-laws-list" class="space-y-2 text-xs max-h-80 overflow-y-auto"></div>
+        </div>
+      `;
+      openModal();
+      filterMccLaws('');
+    }
+
+    function buildUmpireReportText() {
+      const metrics = calculateMatchTimeMetrics();
+      const m = appState.match;
+      return [
+        `OFFICIAL UMPIRE MATCH & OVER-RATE REPORT`,
+        `==================================================`,
+        `Umpire: ${appState.user ? appState.user.name : 'Umpire'} (${appState.user ? appState.user.email : ''})`,
+        `Competition / Ruleset: ${metrics.rule.name}`,
+        `Match: ${m.battingTeam} vs ${m.bowlingTeam}`,
+        `Current Score: ${m.battingTeam} ${m.runs}/${m.wickets} (${m.completedOvers}.${m.ballsInCurrentOver} / ${metrics.effectiveMaxOvers} overs)`,
+        ``,
+        `TIME & OVER-RATE SUMMARY`,
+        `- Scheduled Start: ${formatMinutesToClock(m.scheduledStartMins)} | Adjusted Close: ${formatMinutesToClock(metrics.adjustedCloseMins)}`,
+        `- Total Lost Minutes: ${metrics.rawLostMins}m (Grace: ${metrics.rule.graceMins}m | Net Deductible: ${metrics.netLostAfterGrace}m)`,
+        `- Total Added Minutes: ${metrics.addedMins}m`,
+        `- Overs Deducted: ${metrics.oversDeducted} overs`,
+        `- Live Pacing Status: ${metrics.overDiff >= 0 ? '+' : ''}${metrics.overDiff.toFixed(1)} overs (${metrics.minsDiff >= 0 ? '+' : ''}${metrics.minsDiff} mins)`,
+        ``,
+        `LOST / ADDED MINUTES LOG`,
+        ...(m.timeLogs.length ? m.timeLogs.map(l => `• [${l.timestamp}] ${l.type} (${l.isAdded ? '+' : '-'}${l.minutes}m): ${l.comment}`) : ['• None recorded']),
+        ``,
+        `BOWLER WORKLOADS & SPELLS`,
+        ...m.bowlers.filter(b => b.overs > 0 || b.balls > 0).map(b => `• ${b.name}: ${b.overs}.${b.balls}-${b.maidens}-${b.runs}-${b.wickets} (Max Quota: ${metrics.rule.maxOversPerBowler})`)
+      ].join('\n');
+    }
+
+    function openExportReportModal() {
+      const reportText = buildUmpireReportText();
+      const defaultRecipient = appState.user ? appState.user.email : '';
+      const modal = document.getElementById('modal-content');
+      modal.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h3 class="text-lg font-black text-slate-900">Dispatch Umpire Match Report</h3>
+            <button onclick="closeModal()" class="text-slate-500 font-bold text-lg">✕</button>
+          </div>
+          <div>
+            <label class="block text-[11px] font-extrabold uppercase text-slate-700 mb-1">Send Report To (Association / Self Email)</label>
+            <input id="report-recipient-email" type="email" value="${defaultRecipient}" placeholder="secretary@association.com.au" class="w-full px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-bold" />
+          </div>
+          <textarea id="export-report-textarea" rows="10" readonly class="w-full p-3 rounded-xl bg-slate-950 text-emerald-300 font-mono text-xs leading-relaxed">${reportText}</textarea>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="sendReportViaResend()" class="py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs tap-btn">
+              📧 Send via Resend
+            </button>
+            <button onclick="copyReportToClipboard()" class="py-3 rounded-xl bg-slate-900 text-white font-extrabold text-xs tap-btn">
+              📋 Copy Text
+            </button>
+          </div>
+        </div>
+      `;
+      openModal();
+    }
+
+    async function sendReportViaResend() {
+      const to = document.getElementById('report-recipient-email').value.trim();
+      const text = document.getElementById('export-report-textarea').value;
+      if (!to || !to.includes('@')) {
+        showToast('Enter a valid recipient email.', 'error');
+        return;
+      }
+      const m = appState.match;
+      const result = await dispatchResendEmail({
+        to,
+        subject: `Umpire Match Report: ${m.battingTeam} vs ${m.bowlingTeam}`,
+        html: `<pre style="font-family:monospace;font-size:13px;background:#0f172a;color:#6ee7b7;padding:16px;border-radius:10px;">${text}</pre>`,
+        text
+      });
+      if (result.ok) {
+        closeModal();
+        showToast(`Match report emailed to ${to}!`, 'success');
+      } else {
+        showToast(`Resend API error: ${result.error}`, 'error');
+      }
+    }
+
+    function copyReportToClipboard() {
+      const textarea = document.getElementById('export-report-textarea');
+      textarea.select();
+      document.execCommand('copy');
+      showToast('Umpire Match Report copied to clipboard!', 'success');
+    }
+
+    function renderScorecard() {
+      const m = appState.match;
+      const rule = getActiveRule();
+      const oversFloat = m.completedOvers + (m.ballsInCurrentOver / 6);
+      const crr = oversFloat > 0 ? (m.runs / oversFloat) : 0;
+      const proj = Math.round(crr * rule.oversPerInnings);
+
+      document.getElementById('sc-crr').textContent = crr.toFixed(2);
+      document.getElementById('sc-proj').textContent = proj;
+      document.getElementById('sc-extras').textContent = m.extras;
+      document.getElementById('sc-batting-title').textContent = `Batting — ${m.battingTeam}`;
+      document.getElementById('sc-bowling-title').textContent = `Bowling — ${m.bowlingTeam}`;
+
+      document.getElementById('scorecard-batting-body').innerHTML = m.homeXI.map(b => `
+        <tr class="${b.status === 'not out' ? 'bg-emerald-50/40 font-bold' : ''}">
+          <td class="py-2 px-3 text-slate-900">${b.name}${b.onStrike && b.status === 'not out' ? ' *' : ''}</td>
+          <td class="py-2 px-2 text-slate-500 text-[11px]">${b.status}</td>
+          <td class="py-2 px-2 text-right font-mono font-extrabold text-slate-900">${b.runs}</td>
+          <td class="py-2 px-2 text-right font-mono text-slate-600">${b.balls}</td>
+          <td class="py-2 px-2 text-right font-mono text-slate-600">${b.fours}</td>
+          <td class="py-2 px-3 text-right font-mono text-slate-600">${b.sixes}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('scorecard-bowling-body').innerHTML = m.bowlers.map(bw => {
+        const ovFloat = bw.overs + (bw.balls / 6);
+        const econ = ovFloat > 0 ? (bw.runs / ovFloat).toFixed(2) : '0.00';
+        return `
+          <tr class="${bw.isBowlingNow ? 'bg-emerald-50/40 font-bold' : ''}">
+            <td class="py-2 px-3 text-slate-900">${bw.name}${bw.isBowlingNow ? ' *' : ''}</td>
+            <td class="py-2 px-2 text-right font-mono text-slate-700">${bw.overs}.${bw.balls}</td>
+            <td class="py-2 px-2 text-right font-mono text-slate-600">${bw.maidens}</td>
+            <td class="py-2 px-2 text-right font-mono text-slate-700">${bw.runs}</td>
+            <td class="py-2 px-2 text-right font-mono font-extrabold text-slate-900">${bw.wickets}</td>
+            <td class="py-2 px-3 text-right font-mono text-slate-600">${econ}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openModal() {
+      const overlay = document.getElementById('modal-overlay');
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modal-overlay');
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const colors = type === 'success'
+        ? 'bg-emerald-900 border-emerald-400 text-white'
+        : type === 'error'
+        ? 'bg-rose-900 border-rose-400 text-white'
+        : 'bg-slate-900 border-slate-500 text-white';
+
+      el.className = `${colors} border-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-extrabold tracking-tight transition-all duration-300`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 300);
+      }, 3200);
+    }
+
+    function renderAll() {
+      renderLiveStatusBanner();
+      renderFixtures();
+      renderLiveMatchControls();
+      renderTimeLogs();
+      renderBowlers();
+      renderAssociations();
+      renderScorecard();
+    }
+
+    window.onload = function() {
+      if (appState.user) {
+        enterApp();
+      }
+    };
+  </script>
+</body>
+</html>
